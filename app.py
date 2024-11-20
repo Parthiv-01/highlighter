@@ -2,6 +2,8 @@ import logging
 import time
 
 import streamlit as st
+from streamlit import session_state as ss
+from streamlit_pdf_viewer import pdf_viewer
 
 from src import generate_highlighted_pdf
 
@@ -36,13 +38,16 @@ def process_pdf(uploaded_file):
     start_time = time.time()
 
     with st.spinner("Processing..."):
+        # Call the PDF processing function
         result = generate_highlighted_pdf(uploaded_file)
-        if isinstance(result, str):
+
+        # Check for errors returned by the `generate_highlighted_pdf` function
+        if isinstance(result, str):  # Error message returned as a string
             st.error(result)
             logger.error("Error generating highlighted PDF: %s", result)
             return
         else:
-            file = result
+            file = result  # The processed PDF content
 
     end_time = time.time()
     execution_time = end_time - start_time
@@ -50,11 +55,21 @@ def process_pdf(uploaded_file):
         f"Highlighted PDF generated successfully in {execution_time:.2f} seconds."
     )
 
-    st.write("Download highlighted "+uploaded_file.name+" :")
+    # Save the processed PDF to a temporary location for viewing
+    with open("highlighted_output.pdf", "wb") as f:
+        f.write(file)
+
+    # Display the highlighted PDF
+    st.write("**Preview Highlighted PDF:**")
+    pdf_viewer("highlighted_output.pdf")
+
+    # Download button for the processed PDF
+    st.write("Download highlighted PDF:")
     st.download_button(
         label="Download",
         data=file,
-        file_name="highlighted "+uploaded_file.name,
+        file_name="highlighted_" + uploaded_file.name,
+        mime="application/pdf",
     )
 
 
