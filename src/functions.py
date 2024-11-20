@@ -1,6 +1,6 @@
 import logging
-from typing import BinaryIO, List, Tuple
-import fitz
+from typing import BinaryIO, List, Tuple, Any
+import pymupdf
 import networkx as nx
 import numpy as np
 import torch
@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
 
-def load_sentence_model(revision: str = None) -> SentenceTransformer:
+def load_sentence_model() -> SentenceTransformer:
     return SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 
@@ -168,7 +168,7 @@ def extract_text_from_pages(doc):
 
 def generate_highlighted_pdf(
     input_pdf_file: BinaryIO, model=load_sentence_model()
-) -> bytes:
+) -> str | Any:
     """
     Generate a highlighted PDF with important sentences.
 
@@ -179,7 +179,7 @@ def generate_highlighted_pdf(
     Returns:
         bytes: Highlighted PDF content.
     """
-    with fitz.open(stream=input_pdf_file.read(), filetype="pdf") as doc:
+    with pymupdf.open(stream=input_pdf_file.read(), filetype="pdf") as doc:
         num_pages = doc.page_count
 
         if num_pages > MAX_PAGE:
@@ -222,10 +222,10 @@ def generate_highlighted_pdf(
 
                 for sentence in important_sentences:
                     rects = page.search_for(sentence)
-                    colors = (fitz.pdfcolor["yellow"], fitz.pdfcolor["orange"])
+                    colors = (pymupdf.pdfcolor["yellow"], pymupdf.pdfcolor["orange"])
 
-                    for i, rect in enumerate(rects):
-                        color = colors[i % 2]
+                    for j, rect in enumerate(rects):
+                        color = colors[j % 2]
                         annot = page.add_highlight_annot(rect)
                         annot.set_colors(stroke=color)
                         annot.update()
